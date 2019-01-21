@@ -1,0 +1,10 @@
+CMakeCache.txt
+CMakeFiles/
+Makefile
+calc
+cmake_install.cmake
+lex.yy.c
+parser.cpp
+parser.hpp
+scanner.cpp
+

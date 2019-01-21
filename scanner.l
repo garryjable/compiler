@@ -2,6 +2,8 @@
 #include <cstdlib>
 
 #include "parser.hpp"
+
+extern "C" int yylex();
 %}
 
 %%
@@ -12,7 +14,7 @@
 "/" {return DIV;}
 "(" {return OPEN;}
 ")" {return CLOSE;}
-"/n" {return DONE;}
+"\n" {return DONE;}
 ";" {return DONE;}
 "=" {return EQUAL;}
 "==" {return EQUAL;}

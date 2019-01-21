@@ -10,15 +10,15 @@ add_flex_bison_dependency(Scanner Parser)
 
 set(EXTRA_COMPILE_FLAGS "-g3 -std=c++14")
 
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} $EXTRA_COMPILE_FLAGS}")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${EXTRA_COMPILE_FLAGS}")
 set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS}")
 
 set(calc_srcs
-	main.cpp
-	symbol_table.hpp
-	symbol_table.cpp
-	${BISON_Parser_OUTPUTS}
-	${FLEX_Scanner_OUTPUTS}
+  main.cpp
+  symbol_table.hpp
+  symbol_table.cpp
+  ${BISON_Parser_OUTPUTS}
+  ${FLEX_Scanner_OUTPUTS}
 )
 source_group("Calc" FILES ${calc_srcs})
 
