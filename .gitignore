@@ -1,7 +1,7 @@
 CMakeCache.txt
 CMakeFiles/
 Makefile
-calc
+cpsl
 cmake_install.cmake
 lex.yy.c
 parser.cpp
