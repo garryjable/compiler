@@ -40,7 +40,7 @@ extern "C" int yylex();
 "(var|VAR)" {return VAR;}
 "(while|WHILE)" {return WHILE;}
 "(write|WRITE)" {return WRITE;}
-[a-zA-Z][a-zA-Z_]* {return ID;}
+[a-zA-Z][a-zA-Z_]* {yylval.id = strdup(yytext);return ID;}
 "+" {return ADD;}
 "-" {return SUB;}
 "*" {return MULT;}
@@ -69,30 +69,12 @@ extern "C" int yylex();
 [0x][0-9]* {yylval.val = atof(yytext);return HEX;}
 [1-9][0-9]* {yylval.val = atof(yytext);return DECIMAL;}
 
-['][a-zA-Z]['] {return CHAR;}
-["][a-zA-Z]*["] {return STRING;}
+['][a-zA-Z0-9]['] {yylval.val = yytext;return CHAR;}
+["][a-zA-Z0-9]*["] {yylval.val = yytext;return STRING;}
 
-[ \n\t] ;
+[$][.]*[\n] {;}
 
+[ \n\t] {;}
 %%
-/*
-"+" {return ADD;}
-"-" {return SUB;}
-"*" {return MULT;}
-"/" {return DIV;}
-"(" {return OPEN;}
-")" {return CLOSE;}
-"\n" {return DONE;}
-";" {return DONE;}
-"=" {return EQUAL;}
-"==" {return EQUAL;}
-":=" {return EQUAL;}
-"LET" {return LET;}
-[a-z] {yylval.id = strdup(yytext);return ID;}
-_[a-zA-Z]+ {yylval.id = strdup(yytext+1);return ID;}
-[ \t] {}
 
-[0-9]*\.[0-9]* {yylval.val = atof(yytext);return NUMBER;}
-[0-9]+ {yylval.val = atof(yytext);return NUMBER;}
-*/
 
