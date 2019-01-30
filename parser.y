@@ -80,20 +80,61 @@ bool boolean;
 %%
 /* some practice rules */
 
+Program: OptConstantDecl OptTypeDecl OptVarDecl PorFDeclarations Block {}
+       ;
+
+PorFDeclarations: PorFDeclaration
+                | PfDeclarations PfDeclaration
+                | /*empty*/
+                ;
+
+PorFDeclaration: ProcedureDecl
+               | FunctionDecl
+               ;
+
+OptConstDecl: ConstantDecl
+            | /*empty*/
+            ;
+
+OptTypeDecl: TypeDecl
+           | /*empty*/
+           ;
+
+OptVarDecl: OptVarDecl
+           | /*empty*/
+           ;
+
 /*constand declarations 3.1.1*/
-ConstantDecl: ID ASSIGNMENT Expression {};
+ConstantDecl: CONST ConstAssigns
+            ;
+
+ConstAssigns: ConstAssign
+       | ConstAssigns ConstAssign
+       ;
+
+ConstAssign: ID ASSIGNMENT Expression SEMICOLON
+           ;
 
 /*3.1.2 Procedure and FUnction Declarations */
-ProcedureDecl: PROCEDURE ID FormalParameters {}
-             | PROCEDURE ID FormalParameters Body {}
+ProcedureDecl: PROCEDURE ID LEFTPAREN FormalParameters RIGHTPAREN SEMICOLON FORWARD SEMICOLON {}
+             | PROCEDURE ID LEFTPAREN FormalParameters RIGHTPAREN SEMICOLON Body SEMICOLON {}
              ;
-FunctionDecl: FUNCTION ID FormalParameters Type {}
-            | FUNCTION ID FormalParameters Type Body {} 
+FunctionDecl: FUNCTION ID LEFTPAREN FormalParameters RIGHTPAREN COLON Type SEMICOLON FORWARD SEMICOLON {}
+            | FUNCTION ID LEFTPAREN FormalParameters RIGHTPAREN COLON Type SEMICOLON Body SEMICOLON {} 
             ;
 FormalParameters: {}
-                | (var|ref)? IdentList Type (var|ref)? IdentList Type *
+                | /*empty*/
+                | OptVarRef IdentList COLON Type AdditionalParameters 
                 ;
-Body: ConstantDecl TypeDecl? VarDecl? Block
+AdditionalParameters: /*empty*/
+                    | SEMICOLON OptVarRef IdentList COLON Type AdditionalParameters
+                    ;
+OptVarRef : var
+          | ref
+          | /*empty*/
+          ;
+
+Body: OptConstDecl OptTypeDecl OptVarDecl Block
     ;
 Block: BEGIN StatementSequence END
      ;
