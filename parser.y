@@ -72,6 +72,9 @@ bool boolean;
 %token ASSIGN
 %token MOD
 
+/* octals and HEX? */
+/* comments */
+
 %type <val> INTEGER
 %type <character> CHAR
 %type <boolean> BOOLEAN
@@ -89,8 +92,8 @@ ProcFuncDecls: ProcFuncDecl {}
                 | /*empty*/ {}
                 ;
 
-ProcFuncDecl: ProcDecl {}
-            | FuncDecl {}
+ProcFuncDecl: ProcedureDecl {}
+            | FunctionDecl {}
             ;
 
 OptConstDecl: ConstantDecl {}
@@ -123,8 +126,7 @@ ProcedureDecl: PROCEDURE ID L_PAREN FormalParameters R_PAREN SEMICOLON FORWARD S
 FunctionDecl: FUNCTION ID L_PAREN FormalParameters R_PAREN COLON Type SEMICOLON FORWARD SEMICOLON {}
             | FUNCTION ID L_PAREN FormalParameters R_PAREN COLON Type SEMICOLON Body SEMICOLON {} 
             ;
-FormalParameters: {}
-                | /*empty*/ {}
+FormalParameters: /*empty*/ {}
                 | OptVarRef IdentList COLON Type AdditionalParameters {}
                 ;
 AdditionalParameters: /*empty*/
@@ -318,29 +320,6 @@ ConstExpression: ConstExpression OR ConstExpression {}
                | STR /*what is this */ {}
                | ID /*what is this */ {}
                ;
-
-/*original rules*/
-StatementList : StatementList Statement {}
-              | {}
-              ;
-Statement : Expression DONE {std::cout << $1 << std::endl;}
-          | LET ID EQUAL Expression DONE {symbol_table.store($2,$4);delete($2);}
-          | DONE {}
-          ;
-Expression : Expression ADD Term {$$ = $1 + $3;}
-           | Expression SUB Term {$$ = $1 - $3;}
-           | Term {$$ = $1;}
-           ;
-
-Term : Term MULT Factor { $$ = $1 * $3;}
-     | Term Factor { $$ = $1 * $2;}
-     | Term DIV Factor { $$ = $1 / $3;}
-     | Factor {$$ = $1;}
-     ;
-Factor : OPEN Expression CLOSE {$$ = $2;}
-       | NUMBER {$$ = $1;}
-       | ID {$$ = symbol_table.lookup($1);delete($1);}
-       ;
 
 %%
 
