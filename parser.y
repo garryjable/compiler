@@ -15,6 +15,7 @@ float val;
 char* id;
 bool boolean;
 }
+
 %token ARRAY
 %token BEGIN
 %token CHR
@@ -51,7 +52,7 @@ bool boolean;
 %token SUB
 %token MULT
 %token DIV
-%token AND 
+%token AND
 %token OR
 %token TILDE
 %token EQUAL
@@ -64,12 +65,12 @@ bool boolean;
 %token COMMA
 %token COLON
 %token SEMICOLON
-%token LEFT_PAREN
-%token RIGHT_PAREN
-%token LEFT_BRACKET
-%token RIGHT_BRACKET
-%token ASSIGNMENT
-%token MODULUS
+%token L_PAREN
+%token R_PAREN
+%token L_BRACKET
+%token R_BRACKET
+%token ASSIGN
+%token MOD
 
 %type <val> INTEGER
 %type <character> CHAR
@@ -80,182 +81,243 @@ bool boolean;
 %%
 /* some practice rules */
 
-Program: OptConstantDecl OptTypeDecl OptVarDecl PorFDeclarations Block {}
+Program: OptConstDecl OptTypeDecl OptVarDecl ProcFuncDecls Block {}
        ;
 
-PorFDeclarations: PorFDeclaration
-                | PfDeclarations PfDeclaration
-                | /*empty*/
+ProcFuncDecls: ProcFuncDecl {}
+                | ProcFuncDecls ProcFuncDecl {}
+                | /*empty*/ {}
                 ;
 
-PorFDeclaration: ProcedureDecl
-               | FunctionDecl
-               ;
-
-OptConstDecl: ConstantDecl
-            | /*empty*/
+ProcFuncDecl: ProcDecl {}
+            | FuncDecl {}
             ;
 
-OptTypeDecl: TypeDecl
-           | /*empty*/
+OptConstDecl: ConstantDecl {}
+            | /*empty*/ {}
+            ;
+
+OptTypeDecl: TypeDecl {}
+           | /*empty*/ {}
            ;
 
-OptVarDecl: OptVarDecl
-           | /*empty*/
+OptVarDecl: VarDecl {}
+           | /*empty*/ {}
            ;
 
 /*constand declarations 3.1.1*/
-ConstantDecl: CONST ConstAssigns
+ConstantDecl: CONST ConstAssigns {}
             ;
 
-ConstAssigns: ConstAssign
-       | ConstAssigns ConstAssign
+ConstAssigns: ConstAssign {}
+       | ConstAssigns ConstAssign {}
        ;
 
-ConstAssign: ID ASSIGNMENT Expression SEMICOLON
+ConstAssign: ID ASSIGN Expression SEMICOLON {} /* this needs a thing*/
            ;
 
 /*3.1.2 Procedure and FUnction Declarations */
-ProcedureDecl: PROCEDURE ID LEFTPAREN FormalParameters RIGHTPAREN SEMICOLON FORWARD SEMICOLON {}
-             | PROCEDURE ID LEFTPAREN FormalParameters RIGHTPAREN SEMICOLON Body SEMICOLON {}
+ProcedureDecl: PROCEDURE ID L_PAREN FormalParameters R_PAREN SEMICOLON FORWARD SEMICOLON {}
+             | PROCEDURE ID L_PAREN FormalParameters R_PAREN SEMICOLON Body SEMICOLON {}
              ;
-FunctionDecl: FUNCTION ID LEFTPAREN FormalParameters RIGHTPAREN COLON Type SEMICOLON FORWARD SEMICOLON {}
-            | FUNCTION ID LEFTPAREN FormalParameters RIGHTPAREN COLON Type SEMICOLON Body SEMICOLON {} 
+FunctionDecl: FUNCTION ID L_PAREN FormalParameters R_PAREN COLON Type SEMICOLON FORWARD SEMICOLON {}
+            | FUNCTION ID L_PAREN FormalParameters R_PAREN COLON Type SEMICOLON Body SEMICOLON {} 
             ;
 FormalParameters: {}
-                | /*empty*/
-                | OptVarRef IdentList COLON Type AdditionalParameters 
+                | /*empty*/ {}
+                | OptVarRef IdentList COLON Type AdditionalParameters {}
                 ;
 AdditionalParameters: /*empty*/
-                    | SEMICOLON OptVarRef IdentList COLON Type AdditionalParameters
+                    | SEMICOLON OptVarRef IdentList COLON Type AdditionalParameters {}
                     ;
-OptVarRef : var
-          | ref
-          | /*empty*/
+OptVarRef : var {}
+          | ref {}
+          | /*empty*/ {}
           ;
 
-Body: OptConstDecl OptTypeDecl OptVarDecl Block
+Body: OptConstDecl OptTypeDecl OptVarDecl Block {}
     ;
-Block: BEGIN StatementSequence END
+Block: BEGIN StatementSequence END {}
      ;
-/* Type declarations */
-TypeDecl: TYPE ID = TYPE +; 
+/* 3.1.3 Type declarations */
+TypeDecl: TYPE TypeAssigns {}
+        ;
+TypeAssigns: TypeAssign {}
+           | TypeAssigns TypeAssign {}
+           ;
+TypeAssign: ID = TYPE SEMICOLON {} /* this needs C code */
+          ; 
 
-Type: SimpleType
-    | RecordType
-    | ArrayType
+Type: SimpleType {}
+    | RecordType {}
+    | ArrayType {}
     ;
 
-SimpleType: ID
+SimpleType: ID {}
           ;
-RecordType: RECORD IdentList: Type END
+RecordType: RECORD RecordList END {}
           ;
-ArrayType: ARRAY Expression : Expression of TYPE
+
+RecordList: IdentList COLON Type {}
+          : RecordList IdentList COLON Type {}
+          : /* empty */ 
           ;
-IdentList: ID (, ID)*
+ArrayType: ARRAY [ Expression : Expression ] OF Type {}
+          ;
+IdentList: ID AdditionalIdents {}
          ;
 
+AdditionalIdents: COMMA ID {}
+                | AdditionalIdents COMMA ID {}
+                | /*empty*/ {}
+                ;
+
 /* 3.1.4 Variable Declarations */
-VarDecl: VAR IdentList Type
+VarDecl: VAR VarList {}
+       ;
+
+
+VarList: IdentList COLON Type SEMICOLON {}
+       | VarList IdentList COLON Type SEMICOLON  {}
        ;
 
 /* 3.2 CPSL Statements */
 
-StatementSequence: Statement (; Statement) *
+StatementSequence: Statement AdditionalStatements {}
                  ;
+AdditionalStatements: IdentList SEMICOLON Type SEMICOLON {}
+                    | AdditionalStatements SEMICOLON Type SEMICOLON {}
+                    | /*empty*/ {}
+                    ;
 
-Statement: Assignment
-         | IfStatement
-         | WhileStatement
-         | RepeatStatement
-         | ForStatement
-         | StopStatement
-         | ReturnStatement
-         | ReadStatement
-         | WriteStatement
-         | ProcedureCall
-         | NullStatement
+Statement: Assignment {}
+         | IfStatement {}
+         | WhileStatement {}
+         | RepeatStatement {}
+         | ForStatement {}
+         | StopStatement {}
+         | ReturnStatement {}
+         | ReadStatement {}
+         | WriteStatement {}
+         | ProcedureCall {}
+         | NullStatement {}
          ;
 
-Assignment: LValue ASSIGNMENT Expression
+Assignment: LValue ASSIGN Expression {}
           ;
-IfStatement: IF Expression THEN StatementSequence ELSEIF Expression THEN StatementSequence ELSE StatementSequence END
+IfStatement: IF Expression THEN StatementSequence AdditionalElseIfs ELSE OptionalElse END {}
            ;
-WhileStatement: WHILE Expression DO StatementSequence END
-              ;
-RepeatStatement: REPEAT StatementSequence UNTIL Expression
-               ;
-ForStatement: FOR ID ASSIGN Expression to|downto Expression DO StatementSequence END
+AdditionalElseIfs: ELSEIF Expression THEN StatementSequence {}
+                 : AdditionalElseIfs ELSEIF Expression THEN StatementSequence {}
+                 : /*empty*/ {}
+                 ;
+OptionalElse: ELSE StatementSequence {}
+            : /* empty */ {}
             ;
-StopStatement: STOP
-             ;
-ReturnStatement: RETURN Expression
-               ;
-ReadStatement: READ LValue (,LValue)*
-             ;
-WriteStatement: WRITE Expression (,Expression)*
+WhileStatement: WHILE Expression DO StatementSequence END {}
               ;
-ProcedureCall: ID Expression (,Expression)
+RepeatStatement: REPEAT StatementSequence UNTIL Expression {}
+               ;
+ForStatement: FOR ID ASSIGN Expression ToOrDownTo Expression DO StatementSequence END {}
+            ;
+ToOrDownto: TO {}
+          | DOWNTO {}
+          ;
+StopStatement: STOP {}
              ;
-NullStatement: {}
+ReturnStatement: RETURN OptExpression {}
+               ;
+OptExpression: Expression {}
+             | /* empty*/ {}
+             ;
+ReadStatement: READ L_PAREN LValue LValueList R_PAREN {}
+             ;
+LValueList: COMMA LValue {}
+          : LValueList COMMA LValue {}
+          : /*empty*/ {}
+          ;
+WriteStatement: WRITE L_PAREN Expression AdditionalExpressions R_PAREN {}
+              ;
+AdditionalExpressions: COMMA Expression {}
+                     : AdditionalExpressions COMMA Expression {}
+                     : /*empty*/ {}
+                     ;
+ProcedureCall: ID L_PAREN Expression AdditionalExpressions R_PAREN {}
+             ;
+OptAdditionalExpressions: AdditionalExpressions {}  /*THIS SEEMS IRRELEVANT*/
+                        | /* empty */ {}
+                        ;
+NullStatement: /*empty*/ {}
              ;
 
 /* 3.3 Expressions */
 
-Expression: Expression OR Expression
-          | Expression AND Expression
-          | Expression EQUAL Expression
-          | Expression NOTEQUAL Expression
-          | Expression LESSEQUAL Expression
-          | Expression GREATEREQUAL Expression
-          | Expression LESSTHAN Expression
-          | Expression GREATERTHAN Expression
-          | Expression ADD Expression
-          | Expression SUB Expression
-          | Expression MULT Expression
-          | Expression DIV Expression
-          | Expression MODULUS Expression
-          | TILDE Expression
-          | SUB Expression
-          | LEFTPAREN Expression RIGHTPAREN
-          | ID LEFTPAREN Expression  (,Expression)*  RIGHTPAREN
-          | CHR LEFTPAREN Expression RIGHTPAREN
-          | ORD LEFTPAREN Expression RIGHTPAREN
-          | PRED LEFTPAREN Expression RIGHTPAREN
-          | SUCC LEFTPAREN Expression RIGHTPAREN
-          | LValue
+Expression: Expression OR Expression {}
+          | Expression AND Expression {}
+          | Expression EQUAL Expression {}
+          | Expression NOT_EQUAL Expression {}
+          | Expression LESS_EQUAL Expression {}
+          | Expression GREATER_EQUAL Expression {}
+          | Expression LESS_THAN Expression {}
+          | Expression GREATER_THAN Expression {}
+          | Expression ADD Expression {}
+          | Expression SUB Expression {}
+          | Expression MULT Expression {}
+          | Expression DIV Expression {}
+          | Expression MOD Expression {}
+          | TILDE Expression {}
+          | SUB Expression {}
+          | L_PAREN Expression R_PAREN {}
+          | ID L_PAREN Expression AdditionalExpressions R_PAREN {}
+          | CHR L_PAREN Expression R_PAREN {}
+          | ORD L_PAREN Expression R_PAREN {}
+          | PRED L_PAREN Expression R_PAREN {}
+          | SUCC L_PAREN Expression R_PAREN {}
+          | LValue {}
           ;
 
-LValue: ID ((ID() 
+LValue: ID ((ID() {} /* WTF!!!!!!!!!!!!!!*/
       ;
+
+LValueInternals: DotIdentOrExpression {}
+               : LValueInternals DotIdentOrExpression {}
+               : /*empty*/ {}
+               ;
+DotIdentOrExpression: DOT ID {}
+                    | L_BRACKET Expression R_BRACKET {}
+                    ;
 
 /* 4.1 Constant Expression */
 
-ConstExpression: ConstExpression OR ConstExpression
-               | ConstExpression AND ConstExpression
-               | ConstExpression EQUAL ConstExpression
-               | ConstExpression NOTEQUAL ConstExpression
-               | ConstExpression LESSEQUAL ConstExpression
-               | ConstExpression GREATEREQUAL ConstExpression
-               | ConstExpression LESSTHAN ConstExpression
-               | ConstExpression GREATERTHAN ConstExpression
-               | ConstExpression ADD ConstExpression
-               | ConstExpression SUB ConstExpression
-               | ConstExpression MULT ConstExpression
-               | ConstExpression DIV ConstExpression
-               | ConstExpression MODULUS ConstExpression
-               | TILDE ConstExpression
-               | SUB ConstExpression
-               | LEFTPAREN ConstExpression RIGHTPAREN
-               | INT /*what is this */
-               | CHAR /*what is this */
-               | STR /*what is this */
-               | ID /*what is this */
+ConstantDecl: CONST ConstantAssignments {}
+            ;
+ConstantAssignments: ConstExpression SEMICOLON {}
+                   : ConstantAssignments ConstExpression SEMICOLON {}
+                   ;
+ArrayType: ARRAY L_BRACKET ConstExpression COLON ConstExpression R_BRACKET OF Type {}
+         ;
 
-
-
-
-
+ConstExpression: ConstExpression OR ConstExpression {}
+               | ConstExpression AND ConstExpression {}
+               | ConstExpression EQUAL ConstExpression {}
+               | ConstExpression NOT_EQUAL ConstExpression {}
+               | ConstExpression LESS_EQUAL ConstExpression {}
+               | ConstExpression GREATER_EQUAL ConstExpression {}
+               | ConstExpression LESS_THAN ConstExpression {}
+               | ConstExpression GREATER_THAN ConstExpression {}
+               | ConstExpression ADD ConstExpression {}
+               | ConstExpression SUB ConstExpression {}
+               | ConstExpression MULT ConstExpression {}
+               | ConstExpression DIV ConstExpression {}
+               | ConstExpression MOD ConstExpression {}
+               | TILDE ConstExpression {}
+               | SUB ConstExpression {}
+               | L_PAREN ConstExpression R_PAREN {}
+               | INT /*what is this */ {}
+               | CHAR /*what is this */ {}
+               | STR /*what is this */ {}
+               | ID /*what is this */ {}
+               ;
 
 /*original rules*/
 StatementList : StatementList Statement {}
