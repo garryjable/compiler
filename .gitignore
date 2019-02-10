@@ -7,4 +7,6 @@ lex.yy.c
 parser.cpp
 parser.hpp
 scanner.cpp
-
+y.output
+y.tab.c
+y.tab.h
