@@ -48,19 +48,6 @@ bool boolean;
 %token WHILE
 %token WRITE
 %token ID
-%token ADD
-%token SUB
-%token MULT
-%token DIV
-%token AND
-%token OR
-%token TILDE
-%token EQUAL
-%token NOT_EQUAL
-%token LESS_THAN
-%token LESS_EQUAL
-%token GREATER_THAN
-%token GREATER_EQUAL
 %token DOT
 %token COMMA
 %token COLON
@@ -71,6 +58,10 @@ bool boolean;
 %token R_BRACKET
 %token ASSIGN
 %token MOD
+%token INTEGER
+%token CHAR
+%token BOOLEAN
+%token STRING
 
 /* octals and HEX? */
 /* comments */
@@ -81,16 +72,24 @@ bool boolean;
 %type <val> STRING
 %type <id> ID
 
+%right UMINUS
+%left MULT DIV MOD
+%left ADD SUB
+%nonassoc EQUAL NOT_EQUAL LESS_THAN LESS_EQUAL GREATER_THAN GREATER_EQUAL
+%right TILDE
+%left AND
+%left OR
+
 %%
 /* some practice rules */
 
 Program: OptConstDecl OptTypeDecl OptVarDecl ProcFuncDecls Block {}
        ;
 
-ProcFuncDecls: ProcFuncDecl {}
-                | ProcFuncDecls ProcFuncDecl {}
-                | /*empty*/ {}
-                ;
+ProcFuncDecls: ProcFuncDecl ProcFuncDecls {}
+             | ProcFuncDecl {}
+             | /*empty*/ {}
+             ;
 
 ProcFuncDecl: ProcedureDecl {}
             | FunctionDecl {}
@@ -113,27 +112,29 @@ ConstantDecl: CONST ConstAssigns {}
             ;
 
 ConstAssigns: ConstAssign {}
-       | ConstAssigns ConstAssign {}
-       ;
+            | ConstAssign ConstAssigns {}
+            ;
 
-ConstAssign: ID ASSIGN Expression SEMICOLON {} /* this needs a thing*/
+ConstAssign: ID EQUAL Expression SEMICOLON {} /* this needs a thing*/
            ;
+
 
 /*3.1.2 Procedure and FUnction Declarations */
 ProcedureDecl: PROCEDURE ID L_PAREN FormalParameters R_PAREN SEMICOLON FORWARD SEMICOLON {}
              | PROCEDURE ID L_PAREN FormalParameters R_PAREN SEMICOLON Body SEMICOLON {}
              ;
 FunctionDecl: FUNCTION ID L_PAREN FormalParameters R_PAREN COLON Type SEMICOLON FORWARD SEMICOLON {}
-            | FUNCTION ID L_PAREN FormalParameters R_PAREN COLON Type SEMICOLON Body SEMICOLON {} 
+            | FUNCTION ID L_PAREN FormalParameters R_PAREN COLON Type SEMICOLON Body SEMICOLON {}
             ;
-FormalParameters: /*empty*/ {}
-                | OptVarRef IdentList COLON Type AdditionalParameters {}
+FormalParameters: OptVarRef IdentList COLON Type AdditionalParameters {}
+                | /*empty*/ {}
                 ;
-AdditionalParameters: /*empty*/
-                    | SEMICOLON OptVarRef IdentList COLON Type AdditionalParameters {}
+AdditionalParameters: SEMICOLON OptVarRef IdentList COLON Type AdditionalParameters {}
+                    | SEMICOLON OptVarRef IdentList COLON Type {}
+                    | /*empty*/
                     ;
-OptVarRef : var {}
-          | ref {}
+OptVarRef : VAR {}
+          | REF {}
           | /*empty*/ {}
           ;
 
@@ -144,10 +145,10 @@ Block: BEGIN StatementSequence END {}
 /* 3.1.3 Type declarations */
 TypeDecl: TYPE TypeAssigns {}
         ;
-TypeAssigns: TypeAssign {}
-           | TypeAssigns TypeAssign {}
+TypeAssigns: TypeAssign TypeAssigns {}
+           | TypeAssign {}
            ;
-TypeAssign: ID = TYPE SEMICOLON {} /* this needs C code */
+TypeAssign: ID EQUAL Type SEMICOLON {} /* this needs C code */
           ; 
 
 Type: SimpleType {}
@@ -160,17 +161,17 @@ SimpleType: ID {}
 RecordType: RECORD RecordList END {}
           ;
 
-RecordList: IdentList COLON Type {}
-          : RecordList IdentList COLON Type {}
-          : /* empty */ 
+RecordList: IdentList COLON Type SEMICOLON RecordList {}
+          | IdentList COLON Type SEMICOLON {}
+          | /* empty */ 
           ;
-ArrayType: ARRAY [ Expression : Expression ] OF Type {}
-          ;
+ArrayType: ARRAY L_BRACKET Expression COLON Expression R_BRACKET OF Type {}
+         ;
 IdentList: ID AdditionalIdents {}
          ;
 
-AdditionalIdents: COMMA ID {}
-                | AdditionalIdents COMMA ID {}
+AdditionalIdents: COMMA ID AdditionalIdents {}
+                | COMMA ID {}
                 | /*empty*/ {}
                 ;
 
@@ -178,17 +179,16 @@ AdditionalIdents: COMMA ID {}
 VarDecl: VAR VarList {}
        ;
 
-
-VarList: IdentList COLON Type SEMICOLON {}
-       | VarList IdentList COLON Type SEMICOLON  {}
+VarList: IdentList COLON Type SEMICOLON VarList {}
+       | IdentList COLON Type SEMICOLON {}
        ;
 
 /* 3.2 CPSL Statements */
 
 StatementSequence: Statement AdditionalStatements {}
                  ;
-AdditionalStatements: IdentList SEMICOLON Type SEMICOLON {}
-                    | AdditionalStatements SEMICOLON Type SEMICOLON {}
+AdditionalStatements: SEMICOLON Statement AdditionalStatements {}
+                    | SEMICOLON Statement {}
                     | /*empty*/ {}
                     ;
 
@@ -207,20 +207,20 @@ Statement: Assignment {}
 
 Assignment: LValue ASSIGN Expression {}
           ;
-IfStatement: IF Expression THEN StatementSequence AdditionalElseIfs ELSE OptionalElse END {}
+IfStatement: IF Expression THEN StatementSequence AdditionalElseIfs OptionalElse END {}
            ;
-AdditionalElseIfs: ELSEIF Expression THEN StatementSequence {}
-                 : AdditionalElseIfs ELSEIF Expression THEN StatementSequence {}
-                 : /*empty*/ {}
+AdditionalElseIfs: ELSEIF Expression THEN StatementSequence AdditionalElseIfs {}
+                 | ELSEIF Expression THEN StatementSequence {}
+                 | /*empty*/ {}
                  ;
 OptionalElse: ELSE StatementSequence {}
-            : /* empty */ {}
+            | /* empty */ {}
             ;
 WhileStatement: WHILE Expression DO StatementSequence END {}
               ;
 RepeatStatement: REPEAT StatementSequence UNTIL Expression {}
                ;
-ForStatement: FOR ID ASSIGN Expression ToOrDownTo Expression DO StatementSequence END {}
+ForStatement: FOR ID ASSIGN Expression ToOrDownto Expression DO StatementSequence END {}
             ;
 ToOrDownto: TO {}
           | DOWNTO {}
@@ -234,21 +234,23 @@ OptExpression: Expression {}
              ;
 ReadStatement: READ L_PAREN LValue LValueList R_PAREN {}
              ;
-LValueList: COMMA LValue {}
-          : LValueList COMMA LValue {}
-          : /*empty*/ {}
+LValueList: COMMA LValue LValueList {}
+          | COMMA LValue {}
+          | /*empty*/ {}
           ;
 WriteStatement: WRITE L_PAREN Expression AdditionalExpressions R_PAREN {}
               ;
-AdditionalExpressions: COMMA Expression {}
-                     : AdditionalExpressions COMMA Expression {}
-                     : /*empty*/ {}
+AdditionalExpressions: COMMA Expression AdditionalExpressions {}
+                     | COMMA Expression {}
+                     | /*empty*/ {}
                      ;
-ProcedureCall: ID L_PAREN Expression AdditionalExpressions R_PAREN {}
+ProcedureCall: ID L_PAREN Expression OptExpressions R_PAREN {}
              ;
-OptAdditionalExpressions: AdditionalExpressions {}  /*THIS SEEMS IRRELEVANT*/
-                        | /* empty */ {}
-                        ;
+
+OptExpressions: Expression AdditionalExpressions
+              | /*empty*/
+              ;
+
 NullStatement: /*empty*/ {}
              ;
 
@@ -268,9 +270,9 @@ Expression: Expression OR Expression {}
           | Expression DIV Expression {}
           | Expression MOD Expression {}
           | TILDE Expression {}
-          | SUB Expression {}
+          | UMINUS Expression {}
           | L_PAREN Expression R_PAREN {}
-          | ID L_PAREN Expression AdditionalExpressions R_PAREN {}
+          | ID L_PAREN OptExpressions R_PAREN {}
           | CHR L_PAREN Expression R_PAREN {}
           | ORD L_PAREN Expression R_PAREN {}
           | PRED L_PAREN Expression R_PAREN {}
@@ -278,48 +280,16 @@ Expression: Expression OR Expression {}
           | LValue {}
           ;
 
-LValue: ID ((ID() {} /* WTF!!!!!!!!!!!!!!*/
+LValue: ID LValueInternals {} 
       ;
 
-LValueInternals: DotIdentOrExpression {}
-               : LValueInternals DotIdentOrExpression {}
-               : /*empty*/ {}
+LValueInternals: DotIdentOrExpression LValueInternals {}
+               | DotIdentOrExpression {}
+               | /*empty*/ {}
                ;
 DotIdentOrExpression: DOT ID {}
                     | L_BRACKET Expression R_BRACKET {}
                     ;
-
-/* 4.1 Constant Expression */
-
-ConstantDecl: CONST ConstantAssignments {}
-            ;
-ConstantAssignments: ConstExpression SEMICOLON {}
-                   : ConstantAssignments ConstExpression SEMICOLON {}
-                   ;
-ArrayType: ARRAY L_BRACKET ConstExpression COLON ConstExpression R_BRACKET OF Type {}
-         ;
-
-ConstExpression: ConstExpression OR ConstExpression {}
-               | ConstExpression AND ConstExpression {}
-               | ConstExpression EQUAL ConstExpression {}
-               | ConstExpression NOT_EQUAL ConstExpression {}
-               | ConstExpression LESS_EQUAL ConstExpression {}
-               | ConstExpression GREATER_EQUAL ConstExpression {}
-               | ConstExpression LESS_THAN ConstExpression {}
-               | ConstExpression GREATER_THAN ConstExpression {}
-               | ConstExpression ADD ConstExpression {}
-               | ConstExpression SUB ConstExpression {}
-               | ConstExpression MULT ConstExpression {}
-               | ConstExpression DIV ConstExpression {}
-               | ConstExpression MOD ConstExpression {}
-               | TILDE ConstExpression {}
-               | SUB ConstExpression {}
-               | L_PAREN ConstExpression R_PAREN {}
-               | INT /*what is this */ {}
-               | CHAR /*what is this */ {}
-               | STR /*what is this */ {}
-               | ID /*what is this */ {}
-               ;
 
 %%
 

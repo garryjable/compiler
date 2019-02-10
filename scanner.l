@@ -6,7 +6,6 @@
 extern "C" int yylex();
 %}
 
-
 %%
 
 "(array|ARRAY)" {return ARRAY;}
@@ -74,7 +73,7 @@ extern "C" int yylex();
 
 [$][.]*[\n] {;}
 
-[ \n\t] {;}
+[ \n\t\r\b\f] {;}
 %%
 
 
