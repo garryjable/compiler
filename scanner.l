@@ -9,7 +9,7 @@ extern "C" int yylex();
 %%
 
 "(array|ARRAY)" {return ARRAY;}
-"(begin|BEGIN)" {return BEGIN;}
+"(begin|BEGIN)" {return BEG;}
 "(chr|CHR)" {return CHR;}
 "(const|CONST)" {return CONST;}
 "(do|DO)" {return DO;}
@@ -57,19 +57,19 @@ extern "C" int yylex();
 "," {return COMMA;}
 ":" {return COLON;}
 ";" {return SEMICOLON;}
-"(" {return LEFT_PAREN;}
-")" {return RIGHT_PAREN;}
-"[" {return LEFT_BRACKET;}
-"]" {return RIGHT_BRACKET;}
-":=" {return ASSIGNMENT;}
-"%" {return MODULUS;}
+"(" {return L_PAREN;}
+")" {return R_PAREN;}
+"[" {return L_BRACKET;}
+"]" {return R_BRACKET;}
+":=" {return ASSIGN;}
+"%" {return MOD;}
 
 [0][0-9]* {yylval.val = atof(yytext);return OCTAL;}
 [0x][0-9]* {yylval.val = atof(yytext);return HEX;}
 [1-9][0-9]* {yylval.val = atof(yytext);return DECIMAL;}
 
-['][a-zA-Z0-9]['] {yylval.val = yytext;return CHAR;}
-["][a-zA-Z0-9]*["] {yylval.val = yytext;return STRING;}
+['][a-zA-Z0-9]['] {/*yylval.val = yytext;return CHAR;*/}
+["][a-zA-Z0-9]*["] {/*yylval.val = yytext;return STRING;*/}
 
 [$][.]*[\n] {;}
 

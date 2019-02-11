@@ -17,7 +17,7 @@ bool boolean;
 }
 
 %token ARRAY
-%token BEGIN
+%token BEG
 %token CHR
 %token CONST
 %token DO
@@ -62,6 +62,9 @@ bool boolean;
 %token CHAR
 %token BOOLEAN
 %token STRING
+%token OCTAL
+%token HEX
+%token DECIMAL
 
 /* octals and HEX? */
 /* comments */
@@ -87,7 +90,6 @@ Program: OptConstDecl OptTypeDecl OptVarDecl ProcFuncDecls Block {}
        ;
 
 ProcFuncDecls: ProcFuncDecl ProcFuncDecls {}
-             | ProcFuncDecl {}
              | /*empty*/ {}
              ;
 
@@ -108,11 +110,11 @@ OptVarDecl: VarDecl {}
            ;
 
 /*constand declarations 3.1.1*/
-ConstantDecl: CONST ConstAssigns {}
+ConstantDecl: CONST ConstAssign ConstAssigns {}
             ;
 
-ConstAssigns: ConstAssign {}
-            | ConstAssign ConstAssigns {}
+ConstAssigns: ConstAssign ConstAssigns {}
+            | /*empty*/{}
             ;
 
 ConstAssign: ID EQUAL Expression SEMICOLON {} /* this needs a thing*/
@@ -130,7 +132,6 @@ FormalParameters: OptVarRef IdentList COLON Type AdditionalParameters {}
                 | /*empty*/ {}
                 ;
 AdditionalParameters: SEMICOLON OptVarRef IdentList COLON Type AdditionalParameters {}
-                    | SEMICOLON OptVarRef IdentList COLON Type {}
                     | /*empty*/
                     ;
 OptVarRef : VAR {}
@@ -140,13 +141,13 @@ OptVarRef : VAR {}
 
 Body: OptConstDecl OptTypeDecl OptVarDecl Block {}
     ;
-Block: BEGIN StatementSequence END {}
+Block: BEG StatementSequence END {}
      ;
 /* 3.1.3 Type declarations */
-TypeDecl: TYPE TypeAssigns {}
+TypeDecl: TYPE TypeAssign TypeAssigns {}
         ;
 TypeAssigns: TypeAssign TypeAssigns {}
-           | TypeAssign {}
+           | /*empty*/ {}
            ;
 TypeAssign: ID EQUAL Type SEMICOLON {} /* this needs C code */
           ; 
@@ -162,7 +163,6 @@ RecordType: RECORD RecordList END {}
           ;
 
 RecordList: IdentList COLON Type SEMICOLON RecordList {}
-          | IdentList COLON Type SEMICOLON {}
           | /* empty */ 
           ;
 ArrayType: ARRAY L_BRACKET Expression COLON Expression R_BRACKET OF Type {}
@@ -171,24 +171,25 @@ IdentList: ID AdditionalIdents {}
          ;
 
 AdditionalIdents: COMMA ID AdditionalIdents {}
-                | COMMA ID {}
                 | /*empty*/ {}
                 ;
 
 /* 3.1.4 Variable Declarations */
-VarDecl: VAR VarList {}
+VarDecl: VAR VarAssign VarAssigns {}
        ;
 
-VarList: IdentList COLON Type SEMICOLON VarList {}
-       | IdentList COLON Type SEMICOLON {}
-       ;
+VarAssigns: VarAssign VarAssigns {}
+          | /*empty*/
+          ;
+
+VarAssign: IdentList COLON Type SEMICOLON {}
+         ;
 
 /* 3.2 CPSL Statements */
 
 StatementSequence: Statement AdditionalStatements {}
                  ;
 AdditionalStatements: SEMICOLON Statement AdditionalStatements {}
-                    | SEMICOLON Statement {}
                     | /*empty*/ {}
                     ;
 
@@ -210,7 +211,6 @@ Assignment: LValue ASSIGN Expression {}
 IfStatement: IF Expression THEN StatementSequence AdditionalElseIfs OptionalElse END {}
            ;
 AdditionalElseIfs: ELSEIF Expression THEN StatementSequence AdditionalElseIfs {}
-                 | ELSEIF Expression THEN StatementSequence {}
                  | /*empty*/ {}
                  ;
 OptionalElse: ELSE StatementSequence {}
@@ -235,13 +235,11 @@ OptExpression: Expression {}
 ReadStatement: READ L_PAREN LValue LValueList R_PAREN {}
              ;
 LValueList: COMMA LValue LValueList {}
-          | COMMA LValue {}
           | /*empty*/ {}
           ;
 WriteStatement: WRITE L_PAREN Expression AdditionalExpressions R_PAREN {}
               ;
 AdditionalExpressions: COMMA Expression AdditionalExpressions {}
-                     | COMMA Expression {}
                      | /*empty*/ {}
                      ;
 ProcedureCall: ID L_PAREN Expression OptExpressions R_PAREN {}
@@ -280,16 +278,10 @@ Expression: Expression OR Expression {}
           | LValue {}
           ;
 
-LValue: ID LValueInternals {} 
+LValue: ID {}
+      | LValue DOT ID {}
+      | LValue L_BRACKET Expression R_BRACKET {}
       ;
-
-LValueInternals: DotIdentOrExpression LValueInternals {}
-               | DotIdentOrExpression {}
-               | /*empty*/ {}
-               ;
-DotIdentOrExpression: DOT ID {}
-                    | L_BRACKET Expression R_BRACKET {}
-                    ;
 
 %%
 
