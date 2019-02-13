@@ -86,11 +86,12 @@ bool boolean;
 %%
 /* some practice rules */
 
-Program: OptConstDecl OptTypeDecl OptVarDecl ProcFuncDecls Block {}
+Program: OptConstDecl OptTypeDecl OptVarDecl Block {}
+       : OptConstDecl OptTypeDecl OptVarDecl ProcFuncDecls Block {}
        ;
 
-ProcFuncDecls: ProcFuncDecl ProcFuncDecls {}
-             | /*empty*/ {}
+ProcFuncDecls: ProcFuncDecl {}
+             : ProcFuncDecls ProcFuncDecl {}
              ;
 
 ProcFuncDecl: ProcedureDecl {}
@@ -110,16 +111,12 @@ OptVarDecl: VarDecl {}
            ;
 
 /*constand declarations 3.1.1*/
-ConstantDecl: CONST ConstAssign ConstAssigns {}
-            ;
-
-ConstAssigns: ConstAssign ConstAssigns {}
-            | /*empty*/{}
+ConstantDecl: CONST ConstAssign {}
             ;
 
 ConstAssign: ID EQUAL Expression SEMICOLON {} /* this needs a thing*/
+           | ConstAssign ID EQUAL Expression SEMICOLON {} /* this needs a thing*/
            ;
-
 
 /*3.1.2 Procedure and FUnction Declarations */
 ProcedureDecl: PROCEDURE ID L_PAREN FormalParameters R_PAREN SEMICOLON FORWARD SEMICOLON {}
@@ -128,15 +125,14 @@ ProcedureDecl: PROCEDURE ID L_PAREN FormalParameters R_PAREN SEMICOLON FORWARD S
 FunctionDecl: FUNCTION ID L_PAREN FormalParameters R_PAREN COLON Type SEMICOLON FORWARD SEMICOLON {}
             | FUNCTION ID L_PAREN FormalParameters R_PAREN COLON Type SEMICOLON Body SEMICOLON {}
             ;
-FormalParameters: OptVarRef IdentList COLON Type AdditionalParameters {}
+FormalParameters: VAR Parameters {}
+                | REF Parameters {}
+                | Parameters {}
                 | /*empty*/ {}
                 ;
-AdditionalParameters: SEMICOLON OptVarRef IdentList COLON Type AdditionalParameters {}
-                    | /*empty*/
-                    ;
-OptVarRef : VAR {}
-          | REF {}
-          | /*empty*/ {}
+
+Parameters: IdentList COLON Type {}
+          | Parameters IdentList COLON Type {}
           ;
 
 Body: OptConstDecl OptTypeDecl OptVarDecl Block {}
@@ -144,13 +140,11 @@ Body: OptConstDecl OptTypeDecl OptVarDecl Block {}
 Block: BEG StatementSequence END {}
      ;
 /* 3.1.3 Type declarations */
-TypeDecl: TYPE TypeAssign TypeAssigns {}
+TypeDecl: TYPE TypeAssign {}
         ;
-TypeAssigns: TypeAssign TypeAssigns {}
-           | /*empty*/ {}
-           ;
 TypeAssign: ID EQUAL Type SEMICOLON {} /* this needs C code */
-          ; 
+          | TypeAssign ID EQUAL Type SEMICOLON {}
+          ;
 
 Type: SimpleType {}
     | RecordType {}
@@ -159,39 +153,32 @@ Type: SimpleType {}
 
 SimpleType: ID {}
           ;
-RecordType: RECORD RecordList END {}
+RecordType: RECORD END {}
+          | RECORD RecordList END {}
           ;
 
-RecordList: IdentList COLON Type SEMICOLON RecordList {}
-          | /* empty */ 
+RecordList: IdentList COLON Type SEMICOLON {}
+          | RecordList IdentList COLON Type SEMICOLON {}
           ;
 ArrayType: ARRAY L_BRACKET Expression COLON Expression R_BRACKET OF Type {}
          ;
-IdentList: ID AdditionalIdents {}
+IdentList: ID {}
+         | IdentList COMMA ID {}
          ;
 
-AdditionalIdents: COMMA ID AdditionalIdents {}
-                | /*empty*/ {}
-                ;
-
 /* 3.1.4 Variable Declarations */
-VarDecl: VAR VarAssign VarAssigns {}
+VarDecl: VAR VarAssign {}
        ;
 
-VarAssigns: VarAssign VarAssigns {}
-          | /*empty*/
-          ;
-
 VarAssign: IdentList COLON Type SEMICOLON {}
+         | VarAssign IdentList COLON Type SEMICOLON {}
          ;
 
 /* 3.2 CPSL Statements */
 
-StatementSequence: Statement AdditionalStatements {}
+StatementSequence: Statement {}
+                 | StatementSequence SEMICOLON Statement {}
                  ;
-AdditionalStatements: SEMICOLON Statement AdditionalStatements {}
-                    | /*empty*/ {}
-                    ;
 
 Statement: Assignment {}
          | IfStatement {}
@@ -208,45 +195,39 @@ Statement: Assignment {}
 
 Assignment: LValue ASSIGN Expression {}
           ;
-IfStatement: IF Expression THEN StatementSequence AdditionalElseIfs OptionalElse END {}
+IfStatement: IF Expression THEN StatementSequence END {}
+           | IF Expression THEN StatementSequence ElseIfs END {}
+           | IF Expression THEN StatementSequence ElseIfs ELSE StatementSequence END {}
            ;
-AdditionalElseIfs: ELSEIF Expression THEN StatementSequence AdditionalElseIfs {}
-                 | /*empty*/ {}
-                 ;
-OptionalElse: ELSE StatementSequence {}
-            | /* empty */ {}
-            ;
+ElseIfs: ELSEIF Expression THEN StatementSequence {}
+       | ElseIfs ELSEIF Expression THEN StatementSequence {}
+       ;
 WhileStatement: WHILE Expression DO StatementSequence END {}
               ;
 RepeatStatement: REPEAT StatementSequence UNTIL Expression {}
                ;
-ForStatement: FOR ID ASSIGN Expression ToOrDownto Expression DO StatementSequence END {}
+ForStatement: FOR ID ASSIGN Expression TO Expression DO StatementSequence END {}
+            | FOR ID ASSIGN Expression DOWNTO Expression DO StatementSequence END {}
             ;
-ToOrDownto: TO {}
-          | DOWNTO {}
-          ;
 StopStatement: STOP {}
              ;
-ReturnStatement: RETURN OptExpression {}
+ReturnStatement: RETURN {}
+               | RETURN Expression {}
                ;
-OptExpression: Expression {}
-             | /* empty*/ {}
+ReadStatement: READ L_PAREN LValueList R_PAREN {}
              ;
-ReadStatement: READ L_PAREN LValue LValueList R_PAREN {}
-             ;
-LValueList: COMMA LValue LValueList {}
-          | /*empty*/ {}
+LValueList: LValue {}
+          | LValueList COMMA LValue {}
           ;
-WriteStatement: WRITE L_PAREN Expression AdditionalExpressions R_PAREN {}
+WriteStatement: WRITE L_PAREN ExpressionList R_PAREN {}
               ;
-AdditionalExpressions: COMMA Expression AdditionalExpressions {}
-                     | /*empty*/ {}
-                     ;
-ProcedureCall: ID L_PAREN Expression OptExpressions R_PAREN {}
+
+ProcedureCall: ID L_PAREN R_PAREN {}
+             | ID L_PAREN ExpressionList R_PAREN {}
              ;
 
-OptExpressions: Expression AdditionalExpressions
-              | /*empty*/
+ExpressionList: Expression {}
+              | ExpressionList COMMA Expression {}
               ;
 
 NullStatement: /*empty*/ {}
@@ -270,7 +251,7 @@ Expression: Expression OR Expression {}
           | TILDE Expression {}
           | UMINUS Expression {}
           | L_PAREN Expression R_PAREN {}
-          | ID L_PAREN OptExpressions R_PAREN {}
+          | ProcedureCall {}
           | CHR L_PAREN Expression R_PAREN {}
           | ORD L_PAREN Expression R_PAREN {}
           | PRED L_PAREN Expression R_PAREN {}
@@ -282,6 +263,7 @@ LValue: ID {}
       | LValue DOT ID {}
       | LValue L_BRACKET Expression R_BRACKET {}
       ;
+
 
 %%
 
